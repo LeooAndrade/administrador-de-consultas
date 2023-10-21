@@ -9,7 +9,7 @@ const bodyValidatorMiddleware = (req, res, next) => {
     const hasBodyError = bodyArrayValues.some(item => item === null || item === undefined);
 
     if (hasBodyError) {
-        return res.status(404).json({ message: 'Insira todos os campos corretamente' })
+        return res.status(404).json({ message: 'Insira todos os dados corretamente' })
     }
 
     next();

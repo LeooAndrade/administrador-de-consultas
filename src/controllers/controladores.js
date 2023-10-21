@@ -1,4 +1,4 @@
-let { consultorio, medicos, consultas, consultasFinalizadas, laudos } = require('../db/bancodedados');
+let { consultorio, medicos, consultas, consultasFinalizadas, } = require('../db/bancodedados');
 let { bodyValidatorMiddleware } = require('../middleware/bodyValidatorMiddleware')
 
 const consultasMedicas = (req, res) => {
@@ -12,75 +12,80 @@ const consultasMedicas = (req, res) => {
     return res.json(consultas);
 }
 
-let numeroConsulta = 1
+let numberConsultation = 4
 const criarConsulta = (req, res) => {
+    const { tipoConsulta, valorConsulta, paciente } = req.body
+    const { nome, cpf, dataNascimento, email, celular, senha } = paciente
 
-    const cpfExistsQuery = consultas.some(item => item.paciente.cpf === req.body.cpf)
-    if (cpfExistsQuery) {
-        return res.status(400).json({ mensagem: "Já existe um cpf em consultas." })
+    if (!tipoConsulta || !valorConsulta || !nome || !cpf || !dataNascimento || !email || !celular || !senha) {
+        return res.status(400).json({ mensagem: "Preencha todos os dados!" })
     }
-    const valorNumerico = consultas.some(item => item.valorConsulta === Number)
-    if (!valorNumerico) {
+
+    const cpfExistsQuery = consultas.some(item => item.paciente.cpf === req.body.paciente.cpf)
+    if (cpfExistsQuery) {
+        return res.status(400).json({ mensagem: "Já existe uma consulta em andamento com o cpf informado!" })
+    }
+    const valueNumeric = consultas.find(item => typeof item.valorConsulta === "number")
+    if (!valueNumeric) {
         return res.status(400).json({ mensagem: "O valor da consulta está incorreto." })
     }
-    const verificarEspecialidade = consultas.find(item => item.tipoConsulta === medicos.especialidade)
-    if (!verificarEspecialidade) {
+    const checkSpecialty = consultas.find(item => item.tipoConsulta === req.body.tipoConsulta);
+    if (!checkSpecialty) {
         return res.status(400).json({ mensagem: "Não há medico especifico no momento." })
     }
 
-    const identicador = (numeroConsulta++).toString()
-    const enterData = {
+
+    const identicador = (numberConsultation++)
+    const newConsultation = {
         identicador,
-        identificadorMedico: verificarEspecialidade.identificadorMedico,
+        tipoConsulta,
         finalizada: false,
-        paciente: { ...req.body },
+        valorConsulta,
+        paciente: {
+            nome,
+            cpf,
+            dataNascimento,
+            email,
+            celular,
+            senha
+        }
+
     };
-    consultas.push(enterData);
-    return res.status(201).json()
+
+    consultas.push(newConsultation);
+    return res.status(200).json(consultas)
 }
 
 const atualizarPacientes = (req, res) => {
+    const identificadorConsulta = Number(req.params.identificadorConsulta)
 
-    const identificadorConsulta = req.params.identificadorConsulta
-    const cpfInformado = req.body.cpf
-    const emailInformado = req.body.email
-
-    const consultaSelecionada = consultas.find((item) => item.identificador === identificadorConsulta);
-    if (!consultaSelecionada) {
-        //verifica se a consulta existe com base no identificador
-        return res.status(400).json({ mensagem: "identificador invalido" })
+    const findConsultation = consultas.find(item => item.identificador == req.params.identificadorConsulta)
+    if (!findConsultation) {
+        return res.status(400).json({ mensagem: "Essa consulta não existe!" })
+    }
+    const consultationFinished = consultas.filter(item => item.identificador == req.params.identificadorConsulta && item.finalizada)
+    if (consultationFinished.length > 0) {
+        return res.status(400).json({ mensagem: "Consultas finalizadas não podem ser atualizadas!" })
     }
 
-    if (!consultaSelecionada) {
-        //verificar se a consulta não foi finalizada
-        return res.json({ mensagem: "em espera de atendimento" })
+    const checkCpf = consultas.filter(item => item.paciente.cpf == req.body.cpf && !item.finalizada)
+    if (checkCpf.length > 0) {
+        return res.status(400).json({ mensagem: "Já existe uma consulta em aberto para este CPF!" })
     }
 
-
-    if (cpfInformado) {
-        const toCheckCpf = consultas.some(item => item.paciente.cpf == cpfInformado)
-        if (!toCheckCpf) {
-            return res.status(400).json({ mensagem: "Cpf não informado" })
-        }
+    const checkEmail = consultas.filter(item => item.paciente.email == req.body.email && !item.finalizada)
+    if (checkEmail.length > 0) {
+        return res.status(400).json({ mesnagem: "Já existe uma consulta em aberto para este e-mail!" })
     }
-    if (emailInformado) {
-        const toCheckEmail = consultas.some(item => item.paciente.email === emailInformado)
-        if (!toCheckEmail) {
-            return res.status(400).json({ mensagem: "Não existe email cadastrado" })
-        }
-    }
-
-
-
 
     consultas = consultas.map(item => {
         if (item.identificador === identificadorConsulta) {
-            const usuarioAtualizado = { ...consultaSelecionada.paciente, ...req.body }
-            return { ...consultaSelecionada, paciente: { ...usuarioAtualizado } };
+            const usuarioAtualizado = { ...findConsultation.paciente, ...req.body }
+            return { ...findConsultation, paciente: { ...usuarioAtualizado } };
         }
         return item;
     })
-    return res.status(204).json()
+    return res.status(204).json(consultas)
 
 
 }
@@ -104,11 +109,37 @@ const deletarConsulta = (req, res) => {
         return res.status(400).json({ mensagem: "A consulta só pode ser removida se a mesma não estiver finalizada" })
     }
     consultas = consultas.filter((item) => item.identificador !== identificadorConsulta)
-    console.log(consultas);
     return res.status(204).json();
 }
 
 
+const finalizarConsultaMedica = (req, res) => {
+    const { identificadorConsulta, textoMedico } = req.body
+    if (!identificadorConsulta || !textoMedico) {
+        return res.status(400).json({ mensagem: "Preencha os dados corretamente!" })
+    }
+
+    const verificarId = consultas.find((item) => item.identificador === identificadorConsulta)
+    if (!verificarId) {
+        return res.status(400).json({ mensagem: "Verifique o identificador e tente novamente!" })
+    }
+
+    const indiceConsulta = consultas.findIndex((item) => item.identificador === identificadorConsulta)
+    if (indiceConsulta === -1) {
+        return res.status(400).json({ mensagem: "Consulta não encontrada" })
+    }
+    if (consultas[indiceConsulta].finalizada === true) {
+        return res.status(400).json({ mensagem: "Sua consulta já foi finalizada!" })
+    }
+
+    function verificarTamanhoTextoMedico(textoMedico) {
+        if (!textoMedico.length > 0 && !textoMedico.length <= 200) {
+            return res.status({ mensagem: "O tamanho do textoMedico não está dentro do esperado" });
+        }
+    }
+
+    consultasFinalizadas.push()
+}
 
 
 
@@ -119,4 +150,5 @@ module.exports = {
     criarConsulta,
     atualizarPacientes,
     deletarConsulta,
+    finalizarConsultaMedica,
 }
