@@ -1,4 +1,4 @@
-let { consultorio, medicos, consultas, consultasFinalizadas, } = require('../db/bancodedados');
+let { consultorio, medicos, consultas, consultasFinalizadas, laudos, } = require('../db/bancodedados');
 let { bodyValidatorMiddleware } = require('../middleware/bodyValidatorMiddleware')
 
 const consultasMedicas = (req, res) => {
@@ -12,7 +12,7 @@ const consultasMedicas = (req, res) => {
     return res.json(consultas);
 }
 
-let numberConsultation = 4
+let numberConsultation = 1
 const criarConsulta = (req, res) => {
     const { tipoConsulta, valorConsulta, paciente } = req.body
     const { nome, cpf, dataNascimento, email, celular, senha } = paciente
@@ -25,20 +25,20 @@ const criarConsulta = (req, res) => {
     if (cpfExistsQuery) {
         return res.status(400).json({ mensagem: "Já existe uma consulta em andamento com o cpf informado!" })
     }
-    const valueNumeric = consultas.find(item => typeof item.valorConsulta === "number")
-    if (!valueNumeric) {
+    if (typeof valorConsulta !== "number") {
         return res.status(400).json({ mensagem: "O valor da consulta está incorreto." })
     }
-    const checkSpecialty = consultas.find(item => item.tipoConsulta === req.body.tipoConsulta);
+    const checkSpecialty = consultorio.medicos.find(item => item.especialidade === req.body.tipoConsulta);
     if (!checkSpecialty) {
         return res.status(400).json({ mensagem: "Não há medico especifico no momento." })
     }
 
 
-    const identicador = (numberConsultation++)
+    const identificador = (numberConsultation++)
     const newConsultation = {
-        identicador,
+        identificador,
         tipoConsulta,
+        identificadorMedico: checkSpecialty.identificador,
         finalizada: false,
         valorConsulta,
         paciente: {
@@ -85,7 +85,7 @@ const atualizarPacientes = (req, res) => {
         }
         return item;
     })
-    return res.status(204).json(consultas)
+    return res.status(204).json()
 
 
 }
@@ -112,36 +112,71 @@ const deletarConsulta = (req, res) => {
     return res.status(204).json();
 }
 
-
 const finalizarConsultaMedica = (req, res) => {
     const { identificadorConsulta, textoMedico } = req.body
     if (!identificadorConsulta || !textoMedico) {
-        return res.status(400).json({ mensagem: "Preencha os dados corretamente!" })
+        return res.status(400).json({ mensagem: "Preencha todos os dados corretamente!" })
     }
 
-    const verificarId = consultas.find((item) => item.identificador === identificadorConsulta)
-    if (!verificarId) {
-        return res.status(400).json({ mensagem: "Verifique o identificador e tente novamente!" })
-    }
-
-    const indiceConsulta = consultas.findIndex((item) => item.identificador === identificadorConsulta)
-    if (indiceConsulta === -1) {
+    const consulta = consultas.find((item) => item.identificador === identificadorConsulta)
+    if (!consulta) {
         return res.status(400).json({ mensagem: "Consulta não encontrada" })
     }
-    if (consultas[indiceConsulta].finalizada === true) {
+    if (consulta.finalizada === true) {
         return res.status(400).json({ mensagem: "Sua consulta já foi finalizada!" })
     }
+    if (!textoMedico.length > 0 && !textoMedico.length <= 200) {
+        return res.status({ mensagem: "O tamanho do textoMedico não está dentro do esperado" });
+    }
+    consulta.finalizada = true
 
-    function verificarTamanhoTextoMedico(textoMedico) {
-        if (!textoMedico.length > 0 && !textoMedico.length <= 200) {
-            return res.status({ mensagem: "O tamanho do textoMedico não está dentro do esperado" });
-        }
+    consultasFinalizadas.push(consulta)
+    return res.status(204).json();
+}
+
+const listarLaudos = (req, res) => {
+    const { identificador_consulta, senha } = req.query
+
+    if (!identificador_consulta || !senha) {
+        return res.status(400).json({ mensagem: "Verifique seus dados e tente novamente!" })
     }
 
-    consultasFinalizadas.push()
+    const checkQuery = consultas.find(item => +item.identificador === +identificador_consulta)
+    if (!checkQuery) {
+        return res.status(400).json({ mensagem: "Consulta médica não encontrada!" })
+    }
+    const checkPassword = consultas.find(item => item.paciente.senha === senha)
+    if (!checkPassword) {
+        return res.status(400).json({ mensagem: "Senha incorreta, verifique sua senha e tente novamente!" })
+    }
+
+    const checkReport = laudos.filter(item => item.identificadorConsulta === identificador_consulta)
+    if (!checkReport) {
+        return res.satus(400).json({ mensagem: "Está consulta ainda não possui um laudo medico!" })
+
+    }
+
+    return res.status(200).json(laudos)
 }
 
 
+
+const consultasAtendidasMedico = (req, res) => {
+    const { identificador_medico } = req.query
+
+    if (!identificador_medico) {
+        return res.status(400).json({ mensagem: "Informe o identificador medico!" })
+    }
+    const medicoExiste = consultorio.medicos.find(item => +item.identificador === +identificador_medico)
+    if (!medicoExiste) {
+        return res.status(400).json({ mensagem: "O médico informado não existe na base!" })
+    }
+
+    const consultasDoMedico = consultasFinalizadas.filter((consulta) => +consulta.identificadorMedico === +identificador_medico);
+
+    return res.status(200).json(consultasDoMedico);
+
+}
 
 
 
@@ -151,4 +186,6 @@ module.exports = {
     atualizarPacientes,
     deletarConsulta,
     finalizarConsultaMedica,
+    listarLaudos,
+    consultasAtendidasMedico
 }

@@ -17,37 +17,8 @@ module.exports = {
       },
     ]
   },
-  consultas: [{
-    identificador: 1,
-    tipoConsulta: "GERAL",
-    identificadorMedico: 1,
-    finalizada: true,
-    valorConsulta: 3000,
-    paciente: {
-      nome: "John Doe",
-      cpf: "55132392051",
-      dataNascimento: "2022-02-02",
-      celular: "11999997777",
-      email: "john@doe.com",
-      senha: "1234",
-    },
-  },
-  {
-    identificador: 3,
-    tipoConsulta: "ODONTOLOGIA",
-    identificadorMedico: 1,
-    finalizada: false,
-    valorConsulta: 5000,
-    paciente: {
-      nome: "John Doe 3",
-      cpf: "55132392053",
-      dataNascimento: "2022-02-02",
-      celular: "11999997777",
-      email: "john@doe3.com",
-      senha: "1234",
-    },
-  },
-  ],
+  consultas: [],
   consultasFinalizadas: [],
   laudos: []
+
 }
