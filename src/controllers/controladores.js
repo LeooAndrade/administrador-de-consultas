@@ -1,6 +1,7 @@
 let { consultorio, medicos, consultas, consultasFinalizadas, laudos, } = require('../db/bancodedados');
 let { bodyValidatorMiddleware } = require('../middleware/bodyValidatorMiddleware')
 
+
 const consultasMedicas = (req, res) => {
     const { cnes_consultorio, senha_consultorio } = req.query
     const validatePassword = senha_consultorio === "CubosHealth@2022";
@@ -11,7 +12,7 @@ const consultasMedicas = (req, res) => {
     }
     return res.json(consultas);
 }
-
+let identificadorLaudo = 1
 let numberConsultation = 1
 const criarConsulta = (req, res) => {
     const { tipoConsulta, valorConsulta, paciente } = req.body
@@ -130,8 +131,28 @@ const finalizarConsultaMedica = (req, res) => {
     }
     consulta.finalizada = true
 
-    consultasFinalizadas.push(consulta)
-    return res.status(204).json();
+    const consultaFinalizada = {
+        identificador: consulta.numberConsultation,
+        tipoConsulta: consulta.tipoConsulta,
+        identificadorMedico: consulta.identificadorMedico,
+        finalizada: true,
+        identificadorLaudo: identificadorLaudo++,
+        valorConsulta: consulta.valorConsulta,
+        paciente: consulta.paciente
+    }
+    consultasFinalizadas.push(consultaFinalizada);
+
+
+    const criarlaudo = {
+        identificador: identificadorLaudo,
+        identificadorConsulta: consulta.identificador,
+        identificadorMedico: consulta.identificadorMedico,
+        textoMedico,
+        paciente: consulta.paciente
+    }
+    laudos.push(criarlaudo)
+    identificadorLaudo++
+    return res.status(204).json(consultasFinalizadas)
 }
 
 const listarLaudos = (req, res) => {
@@ -158,8 +179,6 @@ const listarLaudos = (req, res) => {
 
     return res.status(200).json(laudos)
 }
-
-
 
 const consultasAtendidasMedico = (req, res) => {
     const { identificador_medico } = req.query
