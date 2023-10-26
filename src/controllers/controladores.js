@@ -10,8 +10,15 @@ const consultasMedicas = (req, res) => {
     if (!validateCnes || !validatePassword) {
         return res.status(401).json({ mensagem: "Cnes ou senha inválidos!" })
     }
-    return res.json(consultas);
+    if (consultas.length > 0) {
+        return res.status(200).json(consultas);
+    }
+    return res.status(204).json()
 }
+
+
+
+
 let identificadorLaudo = 1
 let numberConsultation = 1
 const criarConsulta = (req, res) => {
