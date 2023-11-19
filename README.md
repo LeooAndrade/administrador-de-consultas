@@ -80,12 +80,3 @@ GET /consulta/laudo?identificador_consulta=1&senha=1234
 GET /consultas/medico?identificador_medico=1
 ````
 
-##Status Code##
-200 (OK): Requisição bem-sucedida.
-201 (Created): Requisição bem-sucedida e algo foi criado.
-204 (No Content): Requisição bem-sucedida, sem conteúdo no corpo da resposta.
-400 (Bad Request): O servidor não entendeu a requisição.
-401 (Unauthorized): O usuário não está autenticado.
-403 (Forbidden): O usuário não tem permissão de acessar o recurso solicitado.
-404 (Not Found): O servidor não pode encontrar o recurso solicitado.
-500 (Internal Server Error): Falhas causadas pelo servidor.
