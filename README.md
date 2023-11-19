@@ -8,6 +8,7 @@ O projeto está estruturado da seguinte forma:
 
 src/
 controladores
+
 // Seus controladores vão aqui //
 
 bancodedados.js
