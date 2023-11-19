@@ -52,7 +52,7 @@ yarn start
 A API estará disponível em http://localhost:3000 por padrão.
 ````
 
-#Endpoints#
+Endpoints
 ````
 Listar consultas médicas
 GET /consultas?cnes_consultorio=1001&senha_consultorio=CubosHealth@2022
