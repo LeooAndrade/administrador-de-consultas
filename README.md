@@ -7,8 +7,9 @@ Bem-vindo ao projeto Consultório Médico API da Cubos! Este é um MVP (Produto 
 O projeto está estruturado da seguinte forma:
 
 src/
-controladores/
-// Seus controladores vão aqui
+controladores
+// Seus controladores vão aqui //
+
 bancodedados.js
 rotas.js
 index.js
@@ -50,7 +51,7 @@ yarn start
 A API estará disponível em http://localhost:3000 por padrão.
 ````
 
-##Endpoints##
+#Endpoints#
 ````
 Listar consultas médicas
 GET /consultas?cnes_consultorio=1001&senha_consultorio=CubosHealth@2022
